@@ -1,0 +1,85 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <utility>
+#include <cmath>
+
+using namespace std;
+
+class Heap {
+public:
+    long long data[100000];
+
+    size_t size = 0;
+
+    size_t Left(size_t index) {
+        return index * 2 + 1;
+    }
+
+    size_t Right(size_t index) {
+        return index * 2 + 2;
+    }
+
+    void Insert(long long x) {
+        data[size] = x;
+        size_t index = size;
+        ++size;
+        HeapifyUp(x, index);
+    }
+
+    void Extract() {
+        if (size != 0) {
+            cout << data[0] << "\n";
+            swap(data[size - 1], data[0]);
+            --size;
+            HeapifyDown(0);
+        }
+    }
+
+    void HeapifyUp(long long x, size_t index) {
+        while (index > 0 and x > data[(index - 1) / 2]) {
+            swap(data[(index - 1) / 2], data[index]);
+            index = (index - 1) / 2;
+        }
+    }
+
+    void HeapifyDown(size_t index) {
+        size_t child;
+        size_t left = Left(index);
+        size_t right = Right(index);
+        if (left <= size - 1) {
+            if (right <= size - 1 and data[right] > data[left]) {
+                child = right;
+            } else {
+                child = left;
+            }
+            if (data[child] > data[index]) {
+                swap(data[child], data[index]);
+                HeapifyDown(child);
+            }
+        }
+    }
+
+    void Print() {
+        for (size_t i = 0; i < size; ++i) {
+            cout << data[i] << " ";
+        }
+        cout << "\n";
+    }
+};
+
+int main() {
+    size_t N, request;
+    long long x;
+    Heap heap;
+    cin >> N;
+    for (size_t i = 0; i < N; ++i) {
+        cin >> request;
+        if (request == 0) {
+            cin >> x;
+            heap.Insert(x);
+        } else {
+            heap.Extract();
+        }
+    }
+}
