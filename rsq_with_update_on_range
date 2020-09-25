@@ -1,0 +1,193 @@
+// Thanks to Nikita
+
+
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <tuple>
+
+
+class DO {
+private:
+    struct Vertex {
+        long long value;
+        long long d = 0;
+        long long l;
+        long long r;
+    };
+    long long N_ = 0;
+    long long K_;
+    long long new_size;
+    std::vector<long long> A_;
+    std::vector<Vertex> T_;
+    std::vector<long long> P_;
+    std::vector<long long> pows;
+    long long left(long long V) {
+        return 2 * V + 1;
+    }
+    long long right(long long V) {
+        return 2 * V + 2;
+    }
+    long long gh() {
+        return std::round(std::log2(T_.size() + 1));
+    }
+    int get_height(long long v) {
+        return std::log2(T_[v].r - T_[v].l + 1);
+    }
+    long long parent(long long v) {
+        return (v - 1) / 2;
+    }
+    long get_pow_two(long x) {
+        x--;
+        for (int p = 1; p < 32; p <<=1 ) {
+            x |= (x >> p);
+        }
+        return ++x;
+    }
+    bool is_leaf(long long v) {
+        return v >= new_size - 1;
+    }
+    std::tuple<long long, long long> segment(long long v) {
+        long long v_1 = v;
+        long long v_2 = v;
+        while (2 * v_1 + 1 < T_.size()) {
+            v_1 = 2 * v_1 + 1;
+        }
+        while (2 * v_2 + 2 < T_.size()) {
+            v_2 = 2 * v_2 + 2;
+        }
+        return std::make_tuple(v_1 - new_size + 1, v_2 - new_size + 1);
+    }
+    long long compute(long long v,long long l ,long long r) {
+        if (T_[v].l > r || T_[v].r < l) {
+            return 0;
+        }
+        if (T_[v].l >= l && T_[v].r <= r) {
+            return T_[v].value + T_[v].d * (T_[v].r - T_[v].l + 1);
+        }
+        push(v);
+        return compute(left(v),l, r) + compute(right(v), l, r);
+    }
+    void push(long long v) {
+        if (is_leaf(v)) {
+            return;
+        }
+
+        T_[v].value += T_[v].d * (T_[v].r - T_[v].l + 1);
+        T_[left(v)].d += T_[v].d;
+        T_[right(v)].d += T_[v].d;
+        T_[v].d = 0;
+    }
+    void update(long long v, long long l, long long r, long long d) {
+        if (T_[v].l > r || T_[v].r < l) {
+            return;
+        }
+        if (T_[v].l >= l && T_[v].r <= r) {
+            T_[v].d += d;
+            return;
+        }
+        push(v);
+        update(left(v), l, r, d);
+        update(right(v), l, r, d);
+        T_[v].value = T_[left(v)].value + T_[left(v)].d * (T_[left(v)].r - T_[left(v)].l + 1) +
+                      T_[right(v)].value + T_[right(v)].d * (T_[right(v)].r - T_[right(v)].l + 1);
+    }
+public:
+    DO() = default;
+
+    void init() {
+        std::cin >> N_;
+        new_size = get_pow_two(N_);
+
+        P_.resize(new_size);
+        A_.resize(new_size);
+
+        K_ = std::floor(std::log2(new_size));
+
+
+        for (int i = 0 ; i < N_; ++i) {
+            long long elem;
+            std::cin >> elem;
+            A_[i] = elem;
+        }
+
+        P_[0] = A_[0];
+        pows.resize(K_);
+        pows[0] = 1;
+
+        for (long long i = 1; i < K_; ++i) {
+            pows[i] = pows[i - 1] * 2;
+        }
+        for (int i = 1; i < new_size; ++i) {
+            P_[i] = P_[i - 1] + A_[i];
+        }
+
+        T_.resize(2 * new_size - 1);
+
+        for (int v = new_size - 1 ; v < 2 * new_size - 1; ++v) {
+            T_[v].value = P_[v - new_size + 1];
+        }
+
+        long long ind = 0;
+        for (long long v = new_size - 1 ; v < 2 * new_size - 1; ++v) {
+            T_[v].l = ind;
+            T_[v].r = ind;
+            ind++;
+        }
+
+        ind = new_size - 2;
+
+        long long v;
+        for (long long k = 1; k < K_; ++k) {
+            for (v = new_size - 1; v > pows[k]; v -= pows[k]) {
+                T_[ind].l = v - pows[k] + 1;
+                T_[ind].r = v;
+                ind--;
+            }
+            T_[ind].l = 0;
+            T_[ind].r = pows[k] - 1;
+            ind--;
+        }
+        T_[0].l = 0;
+        T_[0].r = new_size - 1;
+
+
+        ind = new_size - 2;
+
+        for (long long k = 1; k < K_; ++k) {
+            for (v = new_size - 1; v > pows[k]; v -= pows[k]) {
+                T_[ind--].value = P_[v] - P_[v - pows[k]];
+            }
+            T_[ind--].value = P_[v];
+        }
+        T_[0].value = P_[new_size - 1];
+
+        for (int v = new_size - 1 ; v < 2 * new_size - 1; ++v) {
+            T_[v].value = A_[v - new_size + 1];
+        }
+
+    }
+
+    void solve() {
+        long long N;
+        std::cin >> N;
+        int command, l, r;
+        for (int i = 0 ; i < N; ++i) {
+            std::cin >> command >> l >> r;
+            if (command == 1) {
+                std::cout << compute(0, l, r) << '\n';
+            } else {
+                long long x;
+                std::cin >> x;
+                update(0, l, r, x);
+            }
+
+        }
+    }
+};
+int main() {
+    DO RSQ;
+    RSQ.init();
+    RSQ.solve();
+    return 0;
+}
