@@ -1,0 +1,12 @@
+vector<int> pf(string &s) {
+    size_t size = s.size();
+    vector<int> p(size);
+    p[0] = 0;
+    for (size_t i = 1; i < size; ++i) {
+        int t = p[i - 1];
+        while (s[i] != s[t] and t > 0) t = p[t - 1];
+        if (s[i] == s[t]) ++t;
+        p[i] = t;
+    }
+    return p;
+}
