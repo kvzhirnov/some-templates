@@ -1,0 +1,58 @@
+struct rsq {
+    vector<long long> tree;
+    int size;
+
+
+    void initTree(int n) {
+        size = 1;
+        while (size < n) size *= 2;
+        tree.assign(2 * size - 1, 0);
+    }
+
+
+    void set(long long i, long long v, long long x, long long lx, long long rx) {
+        // когда дошли до листа
+        if (rx - lx == 1) {
+            tree[x] = v;
+            return;
+        }
+        long long m = (lx + rx) / 2;
+        if (i < m) {
+            set(i, v, 2 * x + 1, lx, m);
+        } else {
+            set(i, v, 2 * x + 2, m, rx);
+        }
+        tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
+    }
+
+
+    void set(long long i, long long v) {
+        set(i, v, 0, 0, size);
+    }
+
+    void printTree() {
+        for (auto i : tree) {
+            cout << i << " ";
+        }
+        cout << "\n";
+    }
+
+
+    long long sum(long long l, long long r, long long x, long long lx, long long rx) {
+        if (l >= rx || r <= lx) {
+            return 0;
+        }
+        if (lx >= l and rx <= r) {
+            return tree[x];
+        }
+        long long m = (lx + rx) / 2;
+        long long left_sum = sum(l, r, 2 * x + 1, lx, m);
+        long long right_sum = sum(l, r, 2 * x + 2, m, rx);
+        return left_sum + right_sum;
+    }
+
+
+    long long sum(long long l, long long r) {
+        return sum(l, r, 0, 0, size);
+    }
+};
