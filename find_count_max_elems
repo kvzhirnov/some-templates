@@ -1,0 +1,92 @@
+#include <iostream>
+#include <algorithm>
+
+using namespace std;
+
+
+int left(int n) {
+    return 2 * n + 1;
+}
+
+int right(int n) {
+    return 2 * n + 2;
+}
+
+const int n = 2 * 1e5 + 7;
+const int inf = 1e10 + 7;
+
+
+struct rsq {
+
+    int data[n];
+    pair<int, int> p[4 * n];
+
+    void initTree(int n) {
+        for (int i = 0; i < n; i++) {
+            cin >> data[i];
+            set(0, 0, n, i, {data[i], 1});
+        }
+    }
+
+    void set(int v, int l, int r, int pl, pair<int, int> pr) {
+        if (l > pl || r <= pl)
+            return;
+        if (r == l + 1) {
+            p[v] = pr;
+            return;
+        }
+        int m = (l + r) / 2;
+        set(v * 2 + 1, l, m, pl, pr);
+        set(v * 2 + 2, m, r, pl, pr);
+        if (p[left(v)].first < p[right(v)].first) {
+            p[v] = p[right(v)];
+        }
+
+        if (p[left(v)].first == p[right(v)].first) {
+            pair<int, int> temp;
+            temp.first = p[left(v)].first;
+            temp.second = p[left(v)].second + p[right(v)].second;
+            p[v] = temp;
+        }
+        if (p[left(v)].first > p[right(v)].first) {
+            p[v] = p[left(v)];
+        }
+    }
+
+    pair<int, int> query(int v, int lx, int rx, int l, int r) {
+        if (lx >= r || rx <= l)
+            return {-inf, -inf};
+        if (lx >= l && rx <= r)
+            return p[v];
+        int m = (lx + rx) / 2;
+        return sum(query(v * 2 + 1, lx, m, l, r), query(v * 2 + 2, m, rx, l, r));
+    }
+
+    pair<int, int> sum(pair<int, int> a, pair<int, int> b) {
+        if (a.first == b.first) {
+            return {a.first, a.second + b.second};
+        } else if (a.first > b.first) return {a.first, a.second};
+        else if (a.first < b.first) return {b.first, b.second};
+    }
+};
+
+int main() {
+    int n, m;
+    int request;
+    int x, y;
+    rsq tree;
+    cin >> n;
+    tree.initTree(n);
+    cin >> m;
+    for (size_t i = 0; i < m; ++i) {
+        cin >> request;
+        if (request == 1) {
+            cin >> x >> y;
+            pair<int, int> temp = tree.query(0, 0, n, x, y + 1);
+            cout << temp.second << endl;
+        } else if (request == 2) {
+            cin >> x >> y;
+            tree.set(0, 0, n, x, {y, 1});
+        }
+    }
+}
